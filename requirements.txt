@@ -1,0 +1,20 @@
+# Core
+Flask==3.0.3
+pandas==2.2.2
+numpy==1.26.4
+
+# NLP
+nltk==3.8.1
+spacy==3.7.5
+
+# Machine Learning
+scikit-learn==1.5.1
+shap==0.46.0
+
+# Visualization (for evaluation charts in Ch. 4)
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# Utilities
+python-dotenv==1.0.1
+joblib==1.4.2
