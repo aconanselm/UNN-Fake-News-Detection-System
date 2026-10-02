@@ -9,3 +9,4 @@ data/raw/*.csv
 data/raw/*.tsv
 data/raw/README
 !data/raw/unn_dataset.csv
+data/processed/*.csv
