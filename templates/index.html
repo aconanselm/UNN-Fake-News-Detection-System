@@ -2,13 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>UNN Community Fake News Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <main>
-        <h1>UNN Community Fake News Detection System</h1>
-        <p>Environment is working. This page will become the news submission form in Phase 3.</p>
+    <header class="masthead">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/unn-logo.png') }}" alt="University of Nigeria, Nsukka crest" class="logo-crest">
+            <span class="logo-text">UNN&nbsp;CFNDS</span>
+        </div>
+        <p class="masthead-label">University of Nigeria, Nsukka</p>
+        <h1 class="masthead-title">UNN Community Fake News Detection System</h1>
+        <p class="masthead-sub">Paste a message or announcement below. We'll tell you if it looks real, and show you exactly why.</p>
+    </header>
+
+    <main class="container">
+        <form class="submit-card" action="/analyze" method="POST">
+            {% if error %}
+                <p class="form-error">{{ error }}</p>
+            {% endif %}
+            <label for="news_text" class="form-label">News text or message</label>
+            <textarea
+                id="news_text"
+                name="news_text"
+                rows="8"
+                placeholder="e.g. &quot;URGENT: All 100L students must pay N5,000 immediately or lose admission...&quot;"
+            ></textarea>
+            <button type="submit" class="submit-button">Analyze this</button>
+        </form>
+
+        <p class="footer-note">This tool gives a probability-based assessment, not a guarantee. Always verify with official UNN channels.</p>
     </main>
 </body>
 </html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Result - UNN Fake News Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="masthead masthead-compact">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/unn-logo.png') }}" alt="University of Nigeria, Nsukka crest" class="logo-crest">
+            <span class="logo-text">UNN&nbsp;CFND</span>
+        </div>
+        <p class="masthead-label">University of Nigeria, Nsukka</p>
+        <h1 class="masthead-title-small">Analysis Result</h1>
+    </header>
+
+    <main class="container">
+        <section class="verdict-card verdict-{{ result.label|lower }}">
+            <p class="verdict-label">Our assessment</p>
+            <p class="verdict-text">{{ result.label }}</p>
+            <p class="verdict-confidence">{{ result.confidence }}% confidence</p>
+        </section>
+
+        <section class="submitted-text-card">
+            <p class="section-heading">What was submitted</p>
+            <p class="submitted-text">{{ result.original_text }}</p>
+        </section>
+
+        <section class="explanation-card">
+            <p class="section-heading">Why the model reached this conclusion</p>
+            <p class="section-sub">Each word below contributed to the decision. Green pushes toward Real, red pushes toward Fake - size roughly shows how strong the influence was.</p>
+            <div class="word-chips">
+                {% for word, score in result.top_words %}
+                    <span class="word-chip {{ 'chip-real' if score > 0 else 'chip-fake' }}">
+                        {{ word }}
+                    </span>
+                {% endfor %}
+            </div>
+        </section>
+
+        <a href="/" class="back-link">&larr; Analyze another message</a>
+    </main>
+</body>
+</html>
