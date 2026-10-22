@@ -12,10 +12,10 @@
     <header class="masthead">
         <div class="logo">
             <img src="{{ url_for('static', filename='img/unn-logo.png') }}" alt="University of Nigeria, Nsukka crest" class="logo-crest">
-            <span class="logo-text">UNN&nbsp;CFNDS</span>
+            <span class="logo-text">UNN&nbsp;CFND</span>
         </div>
         <p class="masthead-label">University of Nigeria, Nsukka</p>
-        <h1 class="masthead-title">UNN Community Fake News Detection System</h1>
+        <h1 class="masthead-title">Community Fake News Detection</h1>
         <p class="masthead-sub">Paste a message or announcement below. We'll tell you if it looks real, and show you exactly why.</p>
     </header>
 
@@ -31,6 +31,16 @@
                 rows="8"
                 placeholder="e.g. &quot;URGENT: All 100L students must pay N5,000 immediately or lose admission...&quot;"
             ></textarea>
+
+            <label for="category" class="form-label form-label-spaced">Category</label>
+            <select id="category" name="category">
+                <option value="Academic">Academic</option>
+                <option value="Admission">Admission</option>
+                <option value="Security">Security</option>
+                <option value="Health">Health</option>
+                <option value="General" selected>General</option>
+            </select>
+
             <button type="submit" class="submit-button">Analyze this</button>
         </form>
 

@@ -1,6 +1,6 @@
 """
 UNN Community Fake News Detection System
-Flask web application - Phase 6
+Flask web application - Phases 6-7 (web interface + database)
 
 Routes:
   GET  /          - the submission form
@@ -17,7 +17,9 @@ mentioning in your report: slightly lower raw accuracy, in exchange
 for genuine explainability.
 """
 
+import json
 import re
+import sqlite3
 import string
 
 import joblib
@@ -27,6 +29,15 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
 app = Flask(__name__)
+
+DB_PATH = 'database/unn_fnd.db'
+
+
+def get_db():
+    """Opens a connection to the SQLite database."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # Load the trained vectorizer and model once, when the app starts
 vectorizer = joblib.load('models/tfidf_vectorizer.pkl')
@@ -94,12 +105,52 @@ def analyze():
         return redirect('/')
 
     submitted_text = request.form.get('news_text', '').strip()
+    category = request.form.get('category', 'General')
 
     if not submitted_text:
         return render_template('index.html', error="Please paste some text to analyze.")
 
     result = analyze_text(submitted_text)
+
+    # Save this submission to the database
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """INSERT INTO submissions (user_id, submitted_text, category, verdict, confidence_score)
+           VALUES (NULL, ?, ?, ?, ?)""",
+        (submitted_text, category, result['label'], result['confidence'])
+    )
+    submission_id = cursor.lastrowid
+
+    # If it was flagged Fake, also log the SHAP explanation
+    if result['label'] == 'Fake':
+        cursor.execute(
+            """INSERT INTO fake_news_detection (submission_id, fake_news_type, shap_explanation)
+               VALUES (?, ?, ?)""",
+            (submission_id, 'Unclassified', json.dumps(result['top_words']))
+        )
+
+    conn.commit()
+    conn.close()
+
+    result['submission_id'] = submission_id
     return render_template('results.html', result=result)
+
+
+@app.route('/feedback', methods=['POST'])
+def feedback():
+    submission_id = request.form.get('submission_id')
+    user_response = request.form.get('response')  # 'Agree' or 'Disagree'
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO feedback (submission_id, user_response) VALUES (?, ?)",
+        (submission_id, user_response)
+    )
+    conn.commit()
+    conn.close()
+
+    return render_template('feedback_thanks.html')
 
 
 if __name__ == '__main__':

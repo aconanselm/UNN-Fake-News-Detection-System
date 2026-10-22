@@ -42,6 +42,16 @@
             </div>
         </section>
 
+        <section class="feedback-card">
+            <p class="section-heading">Was this assessment helpful?</p>
+            <p class="section-sub">Your feedback helps the community judge how reliable the system is.</p>
+            <form action="/feedback" method="POST" class="feedback-form">
+                <input type="hidden" name="submission_id" value="{{ result.submission_id }}">
+                <button type="submit" name="response" value="Agree" class="feedback-button feedback-agree">I agree</button>
+                <button type="submit" name="response" value="Disagree" class="feedback-button feedback-disagree">I disagree</button>
+            </form>
+        </section>
+
         <a href="/" class="back-link">&larr; Analyze another message</a>
     </main>
 </body>
