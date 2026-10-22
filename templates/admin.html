@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard - UNN Fake News Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="masthead masthead-compact">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/unn-logo.png') }}" alt="University of Nigeria, Nsukka crest" class="logo-crest">
+            <span class="logo-text">UNN&nbsp;CFND</span>
+        </div>
+        <p class="masthead-label">University of Nigeria, Nsukka</p>
+        <h1 class="masthead-title-small">Admin Dashboard</h1>
+    </header>
+
+    <main class="container container-wide">
+
+        <section class="stat-grid">
+            <div class="stat-card">
+                <p class="stat-number">{{ stats.total }}</p>
+                <p class="stat-label">Total submissions</p>
+            </div>
+            <div class="stat-card stat-card-fake">
+                <p class="stat-number">{{ stats.fake }}</p>
+                <p class="stat-label">Flagged Fake ({{ stats.fake_pct }}%)</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-number">{{ stats.real }}</p>
+                <p class="stat-label">Judged Real</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-number">{{ stats.users }}</p>
+                <p class="stat-label">Registered users</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-number">{{ stats.agree_pct }}%</p>
+                <p class="stat-label">User agreement ({{ stats.agree }} of {{ stats.feedback_total }} responses)</p>
+            </div>
+        </section>
+
+        <section class="admin-card">
+            <p class="section-heading">Submissions by category</p>
+            {% if by_category %}
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Category</th><th>Submissions</th><th>Flagged Fake</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in by_category %}
+                        <tr>
+                            <td>{{ row['category'] }}</td>
+                            <td>{{ row['total'] }}</td>
+                            <td>{{ row['fake_count'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="section-sub">No submissions yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="admin-card">
+            <p class="section-heading">Recent submissions</p>
+            {% if recent %}
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Text</th><th>Category</th>
+                            <th>Verdict</th><th>Confidence</th><th>Feedback</th><th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent %}
+                        <tr>
+                            <td>{{ row['submission_id'] }}</td>
+                            <td class="cell-text">{{ row['submitted_text'][:90] }}{% if row['submitted_text']|length > 90 %}...{% endif %}</td>
+                            <td>{{ row['category'] }}</td>
+                            <td><span class="badge badge-{{ row['verdict']|lower }}">{{ row['verdict'] }}</span></td>
+                            <td>{{ row['confidence_score'] }}%</td>
+                            <td>{{ row['feedback'] or '-' }}</td>
+                            <td class="cell-time">{{ row['submitted_at'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="section-sub">No submissions yet. Analyze a message on the main page and it will appear here.</p>
+            {% endif %}
+        </section>
+
+        <a href="/" class="back-link">&larr; Back to the detector</a>
+        &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+        <a href="/admin/logout" class="back-link">Log out</a>
+    </main>
+</body>
+</html>

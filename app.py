@@ -1,6 +1,6 @@
 """
 UNN Community Fake News Detection System
-Flask web application - Phases 6-7 (web interface + database)
+Flask web application - Phases 6-8 (web interface, database, accounts, admin)
 
 Routes:
   GET  /          - the submission form
@@ -18,17 +18,24 @@ for genuine explainability.
 """
 
 import json
+import os
 import re
 import sqlite3
 import string
 
 import joblib
 import shap
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
 app = Flask(__name__)
+
+# Admin login settings. For a real deployment, set these as environment
+# variables instead of relying on the defaults below.
+app.secret_key = os.environ.get('SECRET_KEY', 'change-this-secret-key')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'unnadmin2026')
 
 DB_PATH = 'database/unn_fnd.db'
 
@@ -117,8 +124,8 @@ def analyze():
     cursor = conn.cursor()
     cursor.execute(
         """INSERT INTO submissions (user_id, submitted_text, category, verdict, confidence_score)
-           VALUES (NULL, ?, ?, ?, ?)""",
-        (submitted_text, category, result['label'], result['confidence'])
+           VALUES (?, ?, ?, ?, ?)""",
+        (session.get('user_id'), submitted_text, category, result['label'], result['confidence'])
     )
     submission_id = cursor.lastrowid
 
@@ -151,6 +158,153 @@ def feedback():
     conn.close()
 
     return render_template('feedback_thanks.html')
+
+
+@app.context_processor
+def inject_user():
+    """Makes the logged-in user's name available to every template."""
+    return {'current_user_name': session.get('user_name')}
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    error = None
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm', '')
+
+        if not full_name or not email or not password:
+            error = "Please fill in every field."
+        elif '@' not in email:
+            error = "Please enter a valid email address."
+        elif len(password) < 6:
+            error = "Password must be at least 6 characters."
+        elif password != confirm:
+            error = "The two passwords do not match."
+        else:
+            conn = get_db()
+            exists = conn.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone()
+            if exists:
+                conn.close()
+                error = "An account with that email already exists."
+            else:
+                cursor = conn.execute(
+                    "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
+                    (full_name, email, generate_password_hash(password))
+                )
+                conn.commit()
+                session['user_id'] = cursor.lastrowid
+                session['user_name'] = full_name
+                conn.close()
+                return redirect('/')
+    return render_template('register.html', error=error)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        conn = get_db()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        conn.close()
+
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['user_id']
+            session['user_name'] = user['full_name']
+            return redirect('/')
+        error = "Incorrect email or password."
+    return render_template('login.html', error=error)
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('user_name', None)
+    return redirect('/')
+
+
+@app.route('/history')
+def history():
+    if not session.get('user_id'):
+        return redirect('/login')
+
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT submitted_text, category, verdict, confidence_score, submitted_at
+           FROM submissions WHERE user_id = ? ORDER BY submission_id DESC""",
+        (session['user_id'],)
+    ).fetchall()
+    conn.close()
+    return render_template('history.html', rows=rows)
+
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['is_admin'] = True
+            return redirect('/admin')
+        error = "Incorrect password."
+    return render_template('admin_login.html', error=error)
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect('/')
+
+
+@app.route('/admin')
+def admin_dashboard():
+    if not session.get('is_admin'):
+        return redirect('/admin/login')
+
+    conn = get_db()
+
+    total = conn.execute("SELECT COUNT(*) FROM submissions").fetchone()[0]
+    users = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    fake = conn.execute("SELECT COUNT(*) FROM submissions WHERE verdict = 'Fake'").fetchone()[0]
+    real = total - fake
+
+    agree = conn.execute("SELECT COUNT(*) FROM feedback WHERE user_response = 'Agree'").fetchone()[0]
+    disagree = conn.execute("SELECT COUNT(*) FROM feedback WHERE user_response = 'Disagree'").fetchone()[0]
+    feedback_total = agree + disagree
+
+    by_category = conn.execute(
+        """SELECT category,
+                  COUNT(*) AS total,
+                  SUM(CASE WHEN verdict = 'Fake' THEN 1 ELSE 0 END) AS fake_count
+           FROM submissions GROUP BY category ORDER BY total DESC"""
+    ).fetchall()
+
+    recent = conn.execute(
+        """SELECT s.submission_id, s.submitted_text, s.category, s.verdict,
+                  s.confidence_score, s.submitted_at,
+                  (SELECT user_response FROM feedback f
+                   WHERE f.submission_id = s.submission_id
+                   ORDER BY f.feedback_id DESC LIMIT 1) AS feedback
+           FROM submissions s ORDER BY s.submission_id DESC LIMIT 25"""
+    ).fetchall()
+    conn.close()
+
+    stats = {
+        'total': total,
+        'users': users,
+        'fake': fake,
+        'real': real,
+        'fake_pct': round(fake / total * 100, 1) if total else 0,
+        'agree': agree,
+        'disagree': disagree,
+        'feedback_total': feedback_total,
+        'agree_pct': round(agree / feedback_total * 100, 1) if feedback_total else 0,
+    }
+    return render_template('admin.html', stats=stats, by_category=by_category, recent=recent)
 
 
 if __name__ == '__main__':

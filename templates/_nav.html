@@ -1,0 +1,14 @@
+<nav class="site-nav">
+    <a href="/" class="nav-home">Home</a>
+    <div class="nav-links">
+        {% if current_user_name %}
+            <span class="nav-user">Hi, {{ current_user_name }}</span>
+            <a href="/history">My history</a>
+            <a href="/logout">Log out</a>
+        {% else %}
+            <a href="/login">Log in</a>
+            <a href="/register" class="nav-cta">Sign up</a>
+        {% endif %}
+        <a href="/admin" class="nav-admin">Admin</a>
+    </div>
+</nav>

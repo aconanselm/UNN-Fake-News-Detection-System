@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My history - UNN Fake News Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% include '_nav.html' %}
+    <header class="masthead masthead-compact">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/unn-logo.png') }}" alt="University of Nigeria, Nsukka crest" class="logo-crest">
+            <span class="logo-text">UNN&nbsp;CFND</span>
+        </div>
+        <h1 class="masthead-title-small">My submissions</h1>
+    </header>
+
+    <main class="container container-wide">
+        <section class="admin-card">
+            {% if rows %}
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Text</th><th>Category</th><th>Verdict</th><th>Confidence</th><th>Time</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            <td class="cell-text">{{ row['submitted_text'][:120] }}{% if row['submitted_text']|length > 120 %}...{% endif %}</td>
+                            <td>{{ row['category'] }}</td>
+                            <td><span class="badge badge-{{ row['verdict']|lower }}">{{ row['verdict'] }}</span></td>
+                            <td>{{ row['confidence_score'] }}%</td>
+                            <td class="cell-time">{{ row['submitted_at'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="section-sub">You haven't analyzed anything while logged in yet.</p>
+            {% endif %}
+        </section>
+        <a href="/" class="back-link">&larr; Analyze a message</a>
+    </main>
+</body>
+</html>

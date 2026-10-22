@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign up - UNN Fake News Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% include '_nav.html' %}
+    <header class="masthead masthead-compact">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/unn-logo.png') }}" alt="University of Nigeria, Nsukka crest" class="logo-crest">
+            <span class="logo-text">UNN&nbsp;CFND</span>
+        </div>
+        <h1 class="masthead-title-small">Create an account</h1>
+    </header>
+
+    <main class="container">
+        <form class="submit-card" action="/register" method="POST">
+            {% if error %}
+                <p class="form-error">{{ error }}</p>
+            {% endif %}
+            <label for="full_name" class="form-label">Full name</label>
+            <input type="text" id="full_name" name="full_name" class="text-input" autofocus required>
+
+            <label for="email" class="form-label form-label-spaced">Email</label>
+            <input type="email" id="email" name="email" class="text-input" required>
+
+            <label for="password" class="form-label form-label-spaced">Password (at least 6 characters)</label>
+            <input type="password" id="password" name="password" class="text-input" required>
+
+            <label for="confirm" class="form-label form-label-spaced">Confirm password</label>
+            <input type="password" id="confirm" name="confirm" class="text-input" required>
+
+            <button type="submit" class="submit-button">Sign up</button>
+        </form>
+        <p class="footer-note">Already have an account? <a href="/login" class="inline-link">Log in</a></p>
+    </main>
+</body>
+</html>
